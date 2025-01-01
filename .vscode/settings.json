@@ -1,0 +1,14 @@
+{
+  "editor.indentSize": 2,
+  "files.exclude": {
+    ".git": true,
+    ".dart_tool": true,
+    "build": true,
+    ".flutter-plugins": true,
+    ".flutter-plugins-dependencies": true,
+    ".metadata": true,
+    "pubspec.lock": true,
+    "web": true,
+    "android": true
+  }
+}
