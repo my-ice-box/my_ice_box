@@ -9,6 +9,7 @@
     ".metadata": true,
     "pubspec.lock": true,
     "web": true,
-    "android": true
+    "android": true,
+    ".idea": true,
   }
 }
