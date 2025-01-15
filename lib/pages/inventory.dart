@@ -1,89 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:my_ice_box/main.dart';
+import 'package:my_ice_box/widgets/custom_future_builder.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:collection/collection.dart';
 
 class InventoryPage extends StatelessWidget {
-  const InventoryPage({super.key});
+  final String title;
+
+  const InventoryPage({
+    super.key,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // const key = String.fromEnvironment("SUPABASE_ANON_KEY");
-    const numContainers = 5;
+    final column = {
+      '냉동실': 'place_name',
+      '냉장실': 'place_name',
+      '(미분류)': 'place_name',
+      '채소': 'ingredient.category_name',
+      '육류': 'ingredient.category_name',
+      '과일': 'ingredient.category_name',
+      '유제품': 'ingredient.category_name',
+    }[title]!;
 
-    final maxHeight = MediaQuery.of(context).size.height;
-
-    return SingleChildScrollView(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: maxHeight,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            for (int i = 0; i < numContainers; ++i)
-              _ItemContainer(),
-          ],
-        )
-      ),
+    return CustomFutureBuilder<PostgrestList>(
+      future: context.watch<MyAppState>().supabase.from('items')
+        .select('*, ...ingredient!inner(*)')
+        .eq(column, title),
+      builder: (context, snapshot) {
+        return Scaffold(
+          appBar: AppBar(title: Text(title)),
+          body: SingleChildScrollView(
+            child: Column(
+              children: groupBy(
+                snapshot,
+                (item) => item[{
+                  'place_name': 'category_name',
+                  'ingredient.category_name': 'place_name',
+                }[column]!]
+              ).entries.map(
+                (entry) => Column(
+                  children: [
+                    _ItemContainerBar(title: entry.key as String),
+                    _ItemContainerBody(items: entry.value),
+                  ],
+                ),
+              ).toList(),
+            ),
+          ),
+        );
+      }
     );
   }
 }
 
-class _ItemContainer extends StatelessWidget{
+class _ItemContainerBar extends StatelessWidget {
+  final String title;
+
+  const _ItemContainerBar({required this.title});
+
   @override
   Widget build(BuildContext context) {
-    const itemsPerRow = 5;
-    const totalItems = 40;
-
     final maxWidth = MediaQuery.of(context).size.width;
-    final itemWidth = maxWidth / itemsPerRow;
 
-    var containerBar = Container(
+    return Container(
       width: maxWidth,
       padding: EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.blue),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(
-        'container of items',
-        style: Theme.of(context).textTheme.headlineMedium!,
-      ),
+      child: Text(title),
     );
-    var containerBody = SizedBox(
-      width: maxWidth,
-      height: itemWidth * (totalItems / itemsPerRow).ceil(),
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5,
-        ),
-        itemCount: 40,
-        itemBuilder: (context, index) {
-          return Container(
+  }
+}
+
+class _ItemContainerBody extends StatelessWidget {
+  final PostgrestList items;
+
+  const _ItemContainerBody({required this.items});
+  
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth = MediaQuery.of(context).size.width;
+
+    const itemsPerRow = 5;
+    final itemWidth = maxWidth / itemsPerRow;
+
+    return GridView.count(
+      physics: NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      crossAxisCount: itemsPerRow,
+      children: [
+        for (var item in items)
+          Container(
             padding: EdgeInsets.all(5),
-            width: itemWidth,
             height: itemWidth,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue),
+              // color: Theme.of(context).primaryColorLight,
+              border: Border.all(color: Theme.of(context).primaryColor),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: ColoredBox(
-              color: Colors.teal,
-              child: Center(
-                child: Text(
-                  'item',
-                  style: Theme.of(context).textTheme.bodyMedium!,
-                ),
-              ),
+            child: Center(
+              child: Text(item['ingredient_name']),
             ),
-          );
-        },
-      ),
-    );
-
-    return Column(
-      children: [
-        containerBar,
-        containerBody,
+          ),
       ],
     );
   }
