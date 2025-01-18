@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
+import 'package:my_ice_box/pages/profile.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -47,7 +48,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyAppState extends ChangeNotifier {
+class MyAppState with ChangeNotifier {
   // Get a reference your Supabase client
   final supabase = Supabase.instance.client;
 }
@@ -62,6 +63,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   var currentPageIndex = 2;
 
+  var numNote = 5;
+
   @override
   Widget build(BuildContext context) {
     final pageName = [
@@ -73,9 +76,41 @@ class _MainPageState extends State<MainPage> {
     ][currentPageIndex];
 
     return Scaffold(
-      appBar: AppBar(title: Text('This is $pageName Page')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.account_circle),
+          tooltip: 'profile',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfilePage()
+              ),
+            );
+          }
+        ),
+        title: Text('This is $pageName Page'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            tooltip: 'notification',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  duration: Duration(milliseconds: 320),
+                  content: Text('There is no notification.'),
+                )
+              );
+            },
+          ),
+        ],
+      ),
       body: <Widget>[
-        const Placeholder(),
+        const Placeholder(
+          child: Center(
+            child: Text('note doesn\'t exist')
+          ),
+        ),
         const Placeholder(),
         const HomePage(),
         const Placeholder(),
@@ -83,7 +118,7 @@ class _MainPageState extends State<MainPage> {
       ][currentPageIndex],
       floatingActionButton: FloatingActionButton(
         onPressed: (){},
-        tooltip: "I'm tooltip!",
+        tooltip: 'This is action button',
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -95,33 +130,38 @@ class _MainPageState extends State<MainPage> {
         items: [
           BottomNavigationBarItem(
             icon: Badge(
-              label: Text('5'),
+              label: Text('$numNote'),
               child: Icon(Icons.note_outlined),
             ),
             activeIcon: Badge(
-              label: Text('5'),
+              label: Text('$numNote'),
               child: Icon(Icons.note),
             ),
+            tooltip: 'This is note',
             label: 'note',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.search_outlined),
             activeIcon: Icon(Icons.search),
+            tooltip: 'This is search',
             label: 'search',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
+            tooltip: 'This is home',
             label: 'home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.star_outline_rounded),
             activeIcon: Icon(Icons.star_rounded),
+            tooltip: 'This is shortcut',
             label: 'shortcut',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings),
+            tooltip: 'This is settings',
             label: 'settings',
           ),
         ],
