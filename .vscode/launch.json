@@ -1,0 +1,34 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch: Debug",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define-from-file=api-keys.dev.json"
+      ]
+    },
+    {
+      "name": "Launch: Release",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define-from-file=api-keys.dev.json",
+        "--release"
+      ]
+    },
+    {
+      "name": "Launch: Profile",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define-from-file=api-keys.dev.json",
+        "--profile"
+      ]
+    }
+  ]
+}
