@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
+import 'package:my_ice_box/pages/item_box.dart';
 import 'package:my_ice_box/pages/profile.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appTheme =  ThemeData(
+    final appTheme = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme(
         brightness: Brightness.light,
@@ -67,57 +68,45 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pageName = [
-      'note',
-      'search',
-      'home',
-      'shortcut',
-      'settings'
-    ][currentPageIndex];
+    final pageName =
+        ['note', 'search', 'home', 'shortcut', 'settings'][currentPageIndex];
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.account_circle),
-          tooltip: 'profile',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProfilePage()
-              ),
-            );
-          }
-        ),
+            icon: Icon(Icons.account_circle),
+            tooltip: 'profile',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfilePage()),
+              );
+            }),
         title: Text('This is $pageName Page'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
             tooltip: 'notification',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  duration: Duration(milliseconds: 320),
-                  content: Text('There is no notification.'),
-                )
-              );
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                duration: Duration(milliseconds: 320),
+                content: Text('There is no notification.'),
+              ));
             },
           ),
         ],
       ),
       body: <Widget>[
         const Placeholder(
-          child: Center(
-            child: Text('note doesn\'t exist')
-          ),
+          child: Center(child: Text('note doesn\'t exist')),
         ),
         const Placeholder(),
         const HomePage(),
-        const Placeholder(),
+        ItemBox(),
         const Placeholder(),
       ][currentPageIndex],
       floatingActionButton: FloatingActionButton(
-        onPressed: (){},
+        onPressed: () {},
         tooltip: 'This is action button',
         child: const Icon(Icons.add),
       ),
