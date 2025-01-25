@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
 import 'package:my_ice_box/pages/profile.dart';
+import 'package:my_ice_box/pages/search.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -111,8 +112,8 @@ class _MainPageState extends State<MainPage> {
             child: Text('note doesn\'t exist')
           ),
         ),
-        const Placeholder(),
         const HomePage(),
+        const SearchPage(),
         const Placeholder(),
         const Placeholder(),
       ][currentPageIndex],
