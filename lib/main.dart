@@ -63,7 +63,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  var currentPageIndex = 3;
+  var currentPageIndex = 0;
 
   var numNote = 5;
 
@@ -71,7 +71,7 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     const pages = [
       {'name':  '   note', 'widget': TextPlaceholder(text: 'note')},
-      {'name':   'search', 'widget': SearchPage()},
+      {'name':   'search', 'widget': null},
       {'name':     'home', 'widget': HomePage()},
       {'name': 'shortcut', 'widget': TextPlaceholder(text: 'shortcut')},
       {'name': 'settings', 'widget': TextPlaceholder(text: 'settings')},
@@ -116,9 +116,12 @@ class _MainPageState extends State<MainPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (tappedIndex) {
-          setState(() { currentPageIndex = tappedIndex; });
-
-          if(tappedIndex == 1) {
+          if (tappedIndex != 1) {
+            setState(() {
+              currentPageIndex = tappedIndex;
+            });
+          }
+          else {
             showSearch(
               context: context,
               delegate: DataSearch()
