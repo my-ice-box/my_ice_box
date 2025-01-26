@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
 import 'package:my_ice_box/pages/profile.dart';
 import 'package:my_ice_box/pages/search.dart';
+import 'package:my_ice_box/widgets/text_placeholder.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -62,19 +63,20 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  var currentPageIndex = 2;
+  var currentPageIndex = 3;
 
   var numNote = 5;
 
   @override
   Widget build(BuildContext context) {
-    final pageName = [
-      'note',
-      'search',
-      'home',
-      'shortcut',
-      'settings'
-    ][currentPageIndex];
+    const pages = [
+      {'name':  '   note', 'widget': TextPlaceholder(text: 'note')},
+      {'name':   'search', 'widget': SearchPage()},
+      {'name':     'home', 'widget': HomePage()},
+      {'name': 'shortcut', 'widget': TextPlaceholder(text: 'shortcut')},
+      {'name': 'settings', 'widget': TextPlaceholder(text: 'settings')},
+    ];
+    final page = pages[currentPageIndex];
 
     return Scaffold(
       appBar: AppBar(
@@ -90,7 +92,7 @@ class _MainPageState extends State<MainPage> {
             );
           }
         ),
-        title: Text('This is $pageName Page'),
+        title: Text('This is ${page['name'] as String} Page'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -106,26 +108,23 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
       ),
-      body: <Widget>[
-        const Placeholder(
-          child: Center(
-            child: Text('note doesn\'t exist')
-          ),
-        ),
-        const HomePage(),
-        const SearchPage(),
-        const Placeholder(),
-        const Placeholder(),
-      ][currentPageIndex],
+      body: page['widget'] as Widget,
       floatingActionButton: FloatingActionButton(
         onPressed: (){},
         tooltip: 'This is action button',
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        onTap: (tappedIndex) => setState(() {
-          currentPageIndex = tappedIndex;
-        }),
+        onTap: (tappedIndex) {
+          setState(() { currentPageIndex = tappedIndex; });
+
+          if(tappedIndex == 1) {
+            showSearch(
+              context: context,
+              delegate: DataSearch()
+            );
+          }
+        },
         currentIndex: currentPageIndex,
         type: BottomNavigationBarType.fixed,
         items: [

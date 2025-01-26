@@ -1,22 +1,135 @@
 import 'package:flutter/material.dart';
 
+class DataSearch extends SearchDelegate<String> {
+  final recentSearch = [
+    'apple',
+    'banana',
+    'orange',
+    'grape',
+    'watermelon'
+  ];
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(
+        onPressed: () {
+          query = '';
+        },
+        icon: const Icon(Icons.clear),
+      ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      onPressed: () => Navigator.pop(context),
+      icon: AnimatedIcon(
+        icon: AnimatedIcons.menu_arrow,
+        progress: transitionAnimation,
+      ),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return Center(
+      child: Text(query),
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final suggestionList = query.isEmpty ? recentSearch
+      : recentSearch.where((element) => element.startsWith(query)).toList();
+    
+    return ListView.builder(
+      itemBuilder: (context, index) => ListTile(
+        leading: const Icon(Icons.search),
+        onTap: () {
+          showResults(context);
+        },
+        title: RichText(
+          text: TextSpan(
+            text: suggestionList[index].substring(0, query.length),
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+            children: [
+              TextSpan(
+                text: suggestionList[index].substring(query.length),
+                style: const TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      itemCount: suggestionList.length,
+    );
+  }
+}
+
 class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
 
-  // how to close keyboard automatically?
-  // https://stackoverflow.com/questions/68091169/how-to-close-keyboard-automatically
   @override
   Widget build(BuildContext context) {
+    // return SearchAnchor.bar(
+    //   barHintText: 'Search',
+    //   suggestionsBuilder: (context, controller) {
+    //     return List<ListTile>.generate(
+    //       5, (index) {
+    //         return ListTile(
+    //           title: Text('item $index'),
+    //           onTap: () {}
+    //         );
+    //       }
+    //     );
+    //   }
+    // );
+
     return SearchAnchor(
       builder: (context, controller) {
         return SearchBar(
           hintText: 'Search',
           controller: controller,
+          autoFocus: true,
           padding: const WidgetStatePropertyAll<EdgeInsets>(
             EdgeInsets.symmetric(horizontal: 16.0)
           ),
-          onTap: () => controller.openView(),
-          // onChanged: (_) => controller.openView(),
+          onTap: () {
+            // ScaffoldMessenger.of(context).showSnackBar(
+            //   const SnackBar(
+            //     duration: Duration(seconds: 1),
+            //     content: Text('search title'),
+            //   ),
+            // );
+            controller.openView();
+          },
+          onChanged: (_) {
+            // showDialog(
+            //   context: context,
+            //   builder: (context) {
+            //     return AlertDialog(
+            //       title: const Text('search title changed'),
+            //       content: Text('search title changed to $_'),
+            //       actions: [
+            //         TextButton(
+            //           onPressed: () {
+            //             Navigator.pop(context);
+            //           },
+            //           child: const Text('OK'),
+            //         ),
+            //       ],
+            //     );
+            //   },
+            // );
+            controller.openView();
+          },
           onSubmitted: (_) => controller.closeView(_),
           leading: const Icon(Icons.search),
         );
