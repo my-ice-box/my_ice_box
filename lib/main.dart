@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
 import 'package:my_ice_box/pages/profile.dart';
+import 'package:my_ice_box/pages/AddProductPage.dart'; // AddProductPage를 import
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -20,9 +21,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appTheme =  ThemeData(
+    final appTheme = ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme(
+      colorScheme: const ColorScheme(
         brightness: Brightness.light,
         primary: Colors.blue,
         secondary: Colors.amber,
@@ -48,11 +49,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
+/// 앱 전체에서 공유할 Supabase 클라이언트를 관리
 class MyAppState with ChangeNotifier {
-  // Get a reference your Supabase client
   final supabase = Supabase.instance.client;
 }
 
+/// 하단 BottomNavigationBar로 여러 페이지를 전환하는 메인 페이지
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -61,108 +63,121 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  var currentPageIndex = 2;
+  // 기본으로 HomePage(메인 화면)를 보여주도록 인덱스 2 선택
+  int currentPageIndex = 2;
+  int numNote = 5; // Badge에 표시할 숫자
 
-  var numNote = 5;
+  // 각 페이지 위젯을 IndexedStack으로 관리하면, 페이지 상태가 유지됨.
+  final List<Widget> pages = [
+    Center(child: Text("주요 품목 페이지는 준비 중입니다.")),
+    Center(child: Text("검색 페이지는 준비 중입니다.")),
+    const HomePage(),
+    Center(child: Text("요약 페이지는 준비 중입니다.")),
+    Center(child: Text("설정 페이지는 준비 중입니다.")),
+  ];
+
+  // 각 페이지에 대응하는 AppBar 제목
+  final List<String> pageTitles = const [
+    '주요 품목',
+    '검색',
+    '메인화면',
+    '요약',
+    '설정',
+  ];
+
+  /// FloatingActionButton을 누르면 제품 추가 페이지로 이동
+  void _onFabPressed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddProductPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final pageName = [
-      'note',
-      'search',
-      'home',
-      'shortcut',
-      'settings'
-    ][currentPageIndex];
-
     return Scaffold(
       appBar: AppBar(
+        title: Text(pageTitles[currentPageIndex]),
         leading: IconButton(
-          icon: Icon(Icons.account_circle),
-          tooltip: 'profile',
+          icon: const Icon(Icons.account_circle),
+          tooltip: 'Profile',
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => ProfilePage()
-              ),
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
             );
-          }
+          },
         ),
-        title: Text('This is $pageName Page'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
-            tooltip: 'notification',
+            tooltip: 'Notifications',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
+                  content: Text('There are no notifications.'),
                   duration: Duration(milliseconds: 320),
-                  content: Text('There is no notification.'),
-                )
+                ),
               );
             },
           ),
         ],
       ),
-      body: <Widget>[
-        const Placeholder(
-          child: Center(
-            child: Text('note doesn\'t exist')
-          ),
-        ),
-        const Placeholder(),
-        const HomePage(),
-        const Placeholder(),
-        const Placeholder(),
-      ][currentPageIndex],
+      // IndexedStack을 사용하여 페이지 전환 시 각 페이지 상태 유지
+      body: IndexedStack(
+        index: currentPageIndex,
+        children: pages,
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: (){},
-        tooltip: 'This is action button',
+        onPressed: _onFabPressed,
+        tooltip: '제품 추가',
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        onTap: (tappedIndex) => setState(() {
-          currentPageIndex = tappedIndex;
-        }),
         currentIndex: currentPageIndex,
         type: BottomNavigationBarType.fixed,
+        onTap: (int index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+        },
         items: [
+          // Badge 위젯으로 숫자를 표시하는 항목 (예: 알림 수나 품목 수)
           BottomNavigationBarItem(
             icon: Badge(
               label: Text('$numNote'),
-              child: Icon(Icons.note_outlined),
+              child: const Icon(Icons.note_outlined),
             ),
             activeIcon: Badge(
               label: Text('$numNote'),
-              child: Icon(Icons.note),
+              child: const Icon(Icons.note),
             ),
-            tooltip: 'This is note',
-            label: 'note',
+            tooltip: '주요 품목',
+            label: '주요 품목',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.search_outlined),
             activeIcon: Icon(Icons.search),
-            tooltip: 'This is search',
-            label: 'search',
+            tooltip: '검색',
+            label: '검색',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
-            tooltip: 'This is home',
-            label: 'home',
+            tooltip: '메인화면',
+            label: '메인화면',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.star_outline_rounded),
             activeIcon: Icon(Icons.star_rounded),
-            tooltip: 'This is shortcut',
-            label: 'shortcut',
+            tooltip: '요약',
+            label: '요약',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings),
-            tooltip: 'This is settings',
-            label: 'settings',
+            tooltip: '설정',
+            label: '설정',
           ),
         ],
       ),
