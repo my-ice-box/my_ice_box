@@ -63,7 +63,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  var currentPageIndex = 0;
+  var currentPageIndex = 2;
 
   var numNote = 5;
 
@@ -94,6 +94,19 @@ class _MainPageState extends State<MainPage> {
         ),
         title: Text('This is ${page['name'] as String} Page'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'search',
+            onPressed: () {
+              // TODO
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  duration: Duration(milliseconds: 320),
+                  content: Text('Search Button'),
+                )
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.notifications),
             tooltip: 'notification',
