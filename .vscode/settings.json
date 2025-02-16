@@ -1,5 +1,6 @@
 {
   "editor.indentSize": 2,
+  "editor.tabSize": 2,
   "files.exclude": {
     ".git": true,
     ".dart_tool": true,
