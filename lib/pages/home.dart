@@ -32,10 +32,9 @@ class _HomePageState extends State<HomePage> {
         spacing: 15,
         children: <Widget>[
           ContentBar(
-            content: ScrollingText(),
-            // content: Text(
-            //   '와플? 핫도그? 마카롱?',
-            // ),
+            content: ScrollingText(
+              texts: ["와플?", "핫도그?", "마카롱?", "아이스크림?"],
+            ),
           ),
           Expanded(
             child: _CategoryButtons(
