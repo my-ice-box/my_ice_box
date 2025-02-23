@@ -28,25 +28,7 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          // 상단에 "재고 처리" 버튼 추가
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                  const InventoryPage(title: '재고 처리'),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-            child: const Text("재고 처리"),
-          ),
-          const SizedBox(height: 15),
+
           // 그룹별로 분류한 카테고리 버튼 영역 (데이터베이스에서 가져옴)
           Expanded(
             child: _CategoryButtons(

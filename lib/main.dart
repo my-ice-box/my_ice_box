@@ -4,6 +4,8 @@ import 'package:my_ice_box/pages/profile.dart';
 import 'package:my_ice_box/pages/AddProductPage.dart'; // AddProductPage를 import
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_ice_box/pages/inventory.dart';
+import 'package:my_ice_box/pages/search.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,9 +72,9 @@ class _MainPageState extends State<MainPage> {
   // 각 페이지 위젯을 IndexedStack으로 관리하면, 페이지 상태가 유지됨.
   final List<Widget> pages = [
     Center(child: Text("주요 품목 페이지는 준비 중입니다.")),
-    Center(child: Text("검색 페이지는 준비 중입니다.")),
+    const SearchPage(),
     const HomePage(),
-    Center(child: Text("요약 페이지는 준비 중입니다.")),
+    const InventoryPage(title: '재고 처리'),
     Center(child: Text("설정 페이지는 준비 중입니다.")),
   ];
 
@@ -81,7 +83,7 @@ class _MainPageState extends State<MainPage> {
     '주요 품목',
     '검색',
     '메인화면',
-    '요약',
+    '재고 처리',
     '설정',
   ];
 
@@ -170,8 +172,8 @@ class _MainPageState extends State<MainPage> {
           const BottomNavigationBarItem(
             icon: Icon(Icons.star_outline_rounded),
             activeIcon: Icon(Icons.star_rounded),
-            tooltip: '요약',
-            label: '요약',
+            tooltip: '재고 처리',
+            label: '재고 처리',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
