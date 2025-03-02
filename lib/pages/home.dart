@@ -18,9 +18,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = ['공간별',    '종류별'];
-    final     tables = [ 'place', 'category'];
-
+    // 기존에 '공간별', '종류별' 두 그룹 선택 옵션
+    final categories = ['공간별', '종류별'];
+    final tables = ['place', 'category'];
     final table = tables[selectedIndex];
 
     return Container(
@@ -28,19 +28,24 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
+
+          // 그룹별로 분류한 카테고리 버튼 영역 (데이터베이스에서 가져옴)
           Expanded(
             child: _CategoryButtons(
               tableForGroupBy: table,
             ),
           ),
           const SizedBox(height: 15),
+          // 하단 토글 버튼으로 '공간별', '종류별' 선택
           Align(
             alignment: Alignment.centerLeft,
             child: _CategoryToggle(
               categoryItems: categories,
-              onPressed: (index){ setState(() {
-                selectedIndex = index;
-              });},
+              onPressed: (index) {
+                setState(() {
+                  selectedIndex = index;
+                });
+              },
             ),
           ),
         ],
@@ -53,6 +58,7 @@ class _CategoryButtons extends StatelessWidget {
   final String tableForGroupBy;
 
   const _CategoryButtons({
+    super.key,
     required this.tableForGroupBy,
   });
 
@@ -64,10 +70,12 @@ class _CategoryButtons extends StatelessWidget {
     }[tableForGroupBy]!;
 
     return CustomFutureBuilder<PostgrestList>(
-      future: context.watch<MyAppState>().supabase
-        .from(tableForGroupBy)
-        .select('*')
-        .order(column, ascending: true),
+      future: context
+          .watch<MyAppState>()
+          .supabase
+          .from(tableForGroupBy)
+          .select('*')
+          .order(column, ascending: true),
       builder: (context, snapshot) {
         return DynamicColumn(
           spacing: 3,
@@ -75,26 +83,26 @@ class _CategoryButtons extends StatelessWidget {
             return ElevatedButton(
               style: ButtonStyle(
                 alignment: Alignment.center,
-                shape: WidgetStateProperty.all(
+                shape: MaterialStateProperty.all(
                   RoundedRectangleBorder(
                     side: BorderSide(width: 0.2),
                     borderRadius: BorderRadius.circular(15),
                   ),
                 ),
-                foregroundColor: WidgetStateProperty.all(
-                  Theme.of(context).colorScheme.onPrimary
+                foregroundColor: MaterialStateProperty.all(
+                  Theme.of(context).colorScheme.onPrimary,
                 ),
-                textStyle: WidgetStateProperty.all(
-                  TextTheme.of(context).displaySmall
+                textStyle: MaterialStateProperty.all(
+                  Theme.of(context).textTheme.displaySmall,
                 ),
               ),
-              onPressed: (){
+              onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => InventoryPage(
                       title: record[column],
-                    )
+                    ),
                   ),
                 );
               },
@@ -104,16 +112,17 @@ class _CategoryButtons extends StatelessWidget {
             );
           }).toList(),
         );
-      }
+      },
     );
   }
 }
 
-class _CategoryToggle extends StatefulWidget{
+class _CategoryToggle extends StatefulWidget {
   final List<String> categoryItems;
   final void Function(int) onPressed;
 
   const _CategoryToggle({
+    super.key,
     required this.categoryItems,
     required this.onPressed,
   });
@@ -129,7 +138,7 @@ class _CategoryToggleState extends State<_CategoryToggle> {
   Widget build(BuildContext context) {
     final isSelected = List<bool>.generate(
       widget.categoryItems.length,
-      (index) => index == indexSelected
+          (index) => index == indexSelected,
     );
 
     return ToggleButtons(
@@ -139,13 +148,12 @@ class _CategoryToggleState extends State<_CategoryToggle> {
         minHeight: 28,
       ),
       isSelected: isSelected,
-      onPressed: (index) => setState((){
+      onPressed: (index) => setState(() {
         indexSelected = index;
         widget.onPressed(index);
       }),
       children: [
-        for (var item in widget.categoryItems)
-          Text(item),
+        for (var item in widget.categoryItems) Text(item),
       ],
     );
   }
