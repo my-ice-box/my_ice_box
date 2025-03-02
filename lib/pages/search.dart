@@ -2,10 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:my_ice_box/main.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SearchPage extends StatefulWidget {
-  const SearchPage({Key? key}) : super(key: key);
+  const SearchPage({super.key});
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -130,7 +129,7 @@ class _SearchPageState extends State<SearchPage> {
 class ItemDetailPage extends StatelessWidget {
   final Map<String, dynamic> item;
 
-  const ItemDetailPage({Key? key, required this.item}) : super(key: key);
+  const ItemDetailPage({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {

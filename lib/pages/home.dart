@@ -3,6 +3,8 @@ import 'package:my_ice_box/main.dart';
 import 'package:my_ice_box/pages/inventory.dart';
 import 'package:my_ice_box/widgets/custom_future_builder.dart';
 import 'package:my_ice_box/widgets/dynamic_column.dart';
+import 'package:my_ice_box/widgets/content_bar.dart';
+import 'package:my_ice_box/widgets/scrolling_text.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -27,16 +29,23 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(15),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 15,
         children: <Widget>[
-
-          // 그룹별로 분류한 카테고리 버튼 영역 (데이터베이스에서 가져옴)
+          ContentBar(
+            content: ScrollingText(
+              ["와플?", "핫도그?", "마카롱?", "아이스크림?"],
+            ),
+            trailing: const [
+              Icon(Icons.search),
+            ],
+            height: 40,
+            padding: 5,
+          ),
           Expanded(
             child: _CategoryButtons(
               tableForGroupBy: table,
             ),
           ),
-          const SizedBox(height: 15),
-          // 하단 토글 버튼으로 '공간별', '종류별' 선택
           Align(
             alignment: Alignment.centerLeft,
             child: _CategoryToggle(
@@ -58,7 +67,6 @@ class _CategoryButtons extends StatelessWidget {
   final String tableForGroupBy;
 
   const _CategoryButtons({
-    super.key,
     required this.tableForGroupBy,
   });
 

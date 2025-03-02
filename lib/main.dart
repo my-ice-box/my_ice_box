@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
 import 'package:my_ice_box/pages/profile.dart';
-import 'package:my_ice_box/pages/AddProductPage.dart'; // AddProductPage를 import
+import 'package:my_ice_box/pages/AddProductPage.dart';
+import 'package:my_ice_box/pages/search.dart';
+import 'package:my_ice_box/widgets/text_placeholder.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_ice_box/pages/inventory.dart';
-import 'package:my_ice_box/pages/search.dart';
+import 'package:my_ice_box/pages/search_v2.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,15 +80,6 @@ class _MainPageState extends State<MainPage> {
     Center(child: Text("설정 페이지는 준비 중입니다.")),
   ];
 
-  // 각 페이지에 대응하는 AppBar 제목
-  final List<String> pageTitles = const [
-    '주요 품목',
-    '검색',
-    '메인화면',
-    '재고 처리',
-    '설정',
-  ];
-
   /// FloatingActionButton을 누르면 제품 추가 페이지로 이동
   void _onFabPressed() {
     Navigator.push(
@@ -97,9 +90,17 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    const pages = [
+      {'name':  '   note', 'widget': TextPlaceholder(text: 'note')},
+      {'name':   'search', 'widget': null},
+      {'name':     'home', 'widget': HomePage()},
+      {'name': 'shortcut', 'widget': InventoryPage(title: '재고 처리')},
+      {'name': 'settings', 'widget': TextPlaceholder(text: 'settings')},
+    ];
+    final page = pages[currentPageIndex];
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(pageTitles[currentPageIndex]),
         leading: IconButton(
           icon: const Icon(Icons.account_circle),
           tooltip: 'Profile',
@@ -110,7 +111,21 @@ class _MainPageState extends State<MainPage> {
             );
           },
         ),
+        title: Text('This is ${page['name'] as String} Page'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'search',
+            onPressed: () {
+              // TODO
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  duration: Duration(milliseconds: 320),
+                  content: Text('Search Button'),
+                )
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.notifications),
             tooltip: 'Notifications',
@@ -125,24 +140,28 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
       ),
-      // IndexedStack을 사용하여 페이지 전환 시 각 페이지 상태 유지
-      body: IndexedStack(
-        index: currentPageIndex,
-        children: pages,
-      ),
+      body: page['widget'] as Widget,
       floatingActionButton: FloatingActionButton(
         onPressed: _onFabPressed,
         tooltip: '제품 추가',
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        onTap: (tappedIndex) {
+          if (tappedIndex != 1) {
+            setState(() {
+              currentPageIndex = tappedIndex;
+            });
+          }
+          else {
+            showSearch(
+              context: context,
+              delegate: DataSearch()
+            );
+          }
+        },
         currentIndex: currentPageIndex,
         type: BottomNavigationBarType.fixed,
-        onTap: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-        },
         items: [
           // Badge 위젯으로 숫자를 표시하는 항목 (예: 알림 수나 품목 수)
           BottomNavigationBarItem(
