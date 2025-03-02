@@ -143,13 +143,12 @@ class ItemDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('이름: ${item['ingredient_name']}', style: Theme.of(context).textTheme.headline6),
+            Text('이름: ${item['ingredient_name']}', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 10),
-            Text('유통기한: ${item['expiration_date'] ?? ''}', style: Theme.of(context).textTheme.bodyText1),
+            Text('유통기한: ${item['expiration_date'] ?? ''}', style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: 10),
-            // 추가 정보가 있다면 아래에 표시 (예: 설명, 카테고리 등)
             if (item['description'] != null)
-              Text('설명: ${item['description']}', style: Theme.of(context).textTheme.bodyText1),
+              Text('설명: ${item['description']}', style: Theme.of(context).textTheme.bodyLarge),
           ],
         ),
       ),
