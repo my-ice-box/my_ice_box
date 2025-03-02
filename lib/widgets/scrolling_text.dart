@@ -1,35 +1,50 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-enum TextScrolling {
+enum ScrollType {
   scrollNext,
   scrollPrev,
   upAndDown,
   downAndUp,
 }
 
-class ScrollingText extends StatefulWidget {
+@immutable
+class ScrollStyle with Diagnosticable {
+  final ScrollType type;
   final Duration animating;
-  final Duration scrolling;
-  final TextScrolling type;
-  final List<String> texts;
+  final Duration waiting;
+
+  const ScrollStyle({
+    required this.type,
+    required this.animating,
+    this.waiting = Duration.zero,
+  });
 
   bool get _isScrollType =>
-    type == TextScrolling.scrollNext ||
-    type == TextScrolling.scrollPrev;
+    type == ScrollType.scrollNext ||
+    type == ScrollType.scrollPrev;
   bool get _isUpward =>
-    type == TextScrolling.scrollNext ||
-    type == TextScrolling.upAndDown;
+    type == ScrollType.scrollNext ||
+    type == ScrollType.upAndDown;
 
-  const ScrollingText({
+  Duration get duration => animating + waiting;
+}
+
+class ScrollingText extends StatefulWidget {
+  final List<String> texts;
+  final TextStyle? textStyle;
+  final ScrollStyle scrollStyle;
+
+  const ScrollingText(
+    this.texts, {
     super.key,
-    this.animating = const Duration(seconds: 2),
-    this.scrolling = const Duration(milliseconds: 500),
-    this.type = TextScrolling.scrollNext,
-    this.texts = const [
-      'placeholder 1',
-      'placeholder 2'
-    ]
+    this.textStyle,
+    this.scrollStyle = const ScrollStyle(
+      type: ScrollType.scrollNext,
+      animating: Duration(milliseconds: 500),
+      waiting: Duration(milliseconds: 1500),
+    ),
   });
 
   @override
@@ -39,7 +54,6 @@ class ScrollingText extends StatefulWidget {
 class _ScrollingTextState extends State<ScrollingText> {
   int _currentIndex = 0;
   bool _isAnimating = false;
-
   int get _nextIndex => (_currentIndex + 1) % widget.texts.length;
 
   void _onAnimationStart(Timer timer) {
@@ -48,7 +62,7 @@ class _ScrollingTextState extends State<ScrollingText> {
 
     // After Scrolling Ends
     Future.delayed(
-      widget.scrolling,
+      widget.scrollStyle.animating,
       () {
         if (!mounted) return;
         setState(() {
@@ -64,53 +78,55 @@ class _ScrollingTextState extends State<ScrollingText> {
     super.initState();
 
     final timer = Timer.periodic(
-      widget.animating,
+      widget.scrollStyle.duration,
       _onAnimationStart,
     );
-
     // fire Now
     _onAnimationStart(timer);
   }
 
-  _buildAnimatedText(double topOffset, String text) {
-    final positioning = widget._isScrollType ?
-      _isAnimating ? widget.scrolling : Duration.zero :
-      widget.scrolling;
-
-    final textStyle = TextStyle(
-      fontSize: 50, 
-      fontWeight: FontWeight.bold,
-    );
+  _buildAnimatedText(double topOffset, String text, double height) {
+    final positioning = widget.scrollStyle._isScrollType ?
+      _isAnimating ? widget.scrollStyle.animating : Duration.zero :
+      widget.scrollStyle.animating;
 
     return AnimatedPositioned(
       duration: positioning,
       curve: Curves.easeInOut,
       top: topOffset,
-      child: Text(text, style: textStyle),
+      child: SizedBox(
+        height: height,
+        child: FittedBox(
+          fit: BoxFit.fitHeight,
+          child: Text(
+            text,
+            style: widget.textStyle
+          ),
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // 텍스트 박스 높이 설정
-    final double height = 50;
+    return LayoutBuilder(builder: (context, constraints) {
+      final double height = constraints.maxHeight;
 
-    return SizedBox(
-      height: height,
-      width: 300,
-      child: Stack(
+      return Stack(
         children: [
           _buildAnimatedText(_isAnimating ?
-              (widget._isUpward ? -height : height) : 0,
-            widget.texts[_currentIndex]
+              (widget.scrollStyle._isUpward ? -height : height) : 0,
+            widget.texts[_currentIndex],
+            height
           ),
-          if (widget._isScrollType)
+          if (widget.scrollStyle._isScrollType)
             _buildAnimatedText(_isAnimating ?
-                0 : (widget._isUpward ? height : -height),
-              widget.texts[_nextIndex]
+                0 : (widget.scrollStyle._isUpward ? height : -height),
+              widget.texts[_nextIndex],
+              height
             ),
         ],
-      ),
-    );
+      );
+    });
   }
 }

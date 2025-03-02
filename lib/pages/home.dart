@@ -33,8 +33,13 @@ class _HomePageState extends State<HomePage> {
         children: <Widget>[
           ContentBar(
             content: ScrollingText(
-              texts: ["와플?", "핫도그?", "마카롱?", "아이스크림?"],
+              ["와플?", "핫도그?", "마카롱?", "아이스크림?"],
             ),
+            trailing: const [
+              Icon(Icons.search),
+            ],
+            height: 40,
+            padding: 5,
           ),
           Expanded(
             child: _CategoryButtons(

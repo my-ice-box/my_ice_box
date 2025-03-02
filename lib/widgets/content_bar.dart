@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:my_ice_box/widgets/custom_row.dart';
 
 class ContentBar extends StatelessWidget {
   final double height;
   final double padding;
   final double elevation;
-  final bool useAbsoluteSize;
 
   final List<Widget>? leading;
   final Widget content;
@@ -12,15 +12,12 @@ class ContentBar extends StatelessWidget {
 
   const ContentBar({
     super.key,
-    this.height = 40,
-    this.padding = 5,
-    this.elevation = 0,
-    this.useAbsoluteSize = false,
     this.leading,
     required this.content,
-    this.trailing = const [
-      Icon(Icons.search),
-    ],
+    this.trailing,
+    required this.height,
+    this.padding = 0,
+    this.elevation = 0,
   });
 
   @override
@@ -29,23 +26,13 @@ class ContentBar extends StatelessWidget {
     final borderRadius = BorderRadius
       .circular(radius);
 
-    final sizedContent = useAbsoluteSize ?
-      content : 
-      FittedBox(
-        fit: BoxFit.fitHeight,
-        child: content
-      );
-    final row = Row(
-      children: [
-        ...?leading,
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: sizedContent,
-          ),
-        ),
-        ...?trailing,
-      ],
+    final row = PairEdgeRow(
+      leading: leading,
+      content: Align(
+        alignment: Alignment.centerLeft,
+        child: content,
+      ),
+      trailing: trailing
     );
 
     return SizedBox(
