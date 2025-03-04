@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
 import 'package:my_ice_box/pages/profile.dart';
 import 'package:my_ice_box/pages/AddProductPage.dart';
-import 'package:my_ice_box/pages/search.dart';
 import 'package:my_ice_box/widgets/text_placeholder.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -53,12 +52,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// 앱 전체에서 공유할 Supabase 클라이언트를 관리
 class MyAppState with ChangeNotifier {
+  /// Supabase 클라이언트 (앱 전체에서 공유)
   final supabase = Supabase.instance.client;
 }
 
-/// 하단 BottomNavigationBar로 여러 페이지를 전환하는 메인 페이지
+/// 여러 페이지를 전환하는 메인 페이지
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -67,141 +66,132 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  // 기본으로 HomePage(메인 화면)를 보여주도록 인덱스 2 선택
-  int currentPageIndex = 2;
-  int numNote = 5; // Badge에 표시할 숫자
+  /// Note Badge에 표시할 숫자
+  int get numNote {
+    // TODO: supabase에서 note 불러오기
+    return 5;
+  }
 
-  // 각 페이지 위젯을 IndexedStack으로 관리하면, 페이지 상태가 유지됨.
-  final List<Widget> pages = [
-    Center(child: Text("주요 품목 페이지는 준비 중입니다.")),
-    const SearchPage(),
-    const HomePage(),
-    const InventoryPage(title: '재고 처리'),
-    Center(child: Text("설정 페이지는 준비 중입니다.")),
+  /// 앱 상단 도구들
+  AppBar get appBar {
+    final profile = IconButton(
+      icon: const Icon(Icons.account_circle),
+      tooltip: 'Profile',
+      onPressed: () => Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
+      ),
+    );
+    final search = IconButton(
+      icon: const Icon(Icons.search),
+      tooltip: 'search',
+      onPressed: () => showSearch(context: context, delegate: DataSearch()),
+    );
+    final notification = IconButton(
+      icon: const Icon(Icons.notifications),
+      tooltip: 'Notifications',
+      onPressed: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('There are no notifications.'),
+            duration: Duration(milliseconds: 320),
+          ),
+        );
+      },
+    );
+
+    return AppBar(
+      leading: profile,
+      title: Text('Ice Box'),
+      actions: [
+        search,
+        notification,
+      ],
+    );
+  }
+
+  /// 메인 페이지에서 이동 가능한 페이지들
+  final pages = [
+    TextPlaceholder(text: 'note'),
+    TextPlaceholder(text: 'search'),
+    HomePage(),
+    InventoryPage(title: '재고 처리'),
+    TextPlaceholder(text: 'settings'),
   ];
+  /// 현재 보여줄 페이지 index
+  int currentPageIndex = 2;
+  /// 현재 보여줄 페이지
+  Widget get page => pages[currentPageIndex];
 
-  /// FloatingActionButton을 누르면 제품 추가 페이지로 이동
-  void _onFabPressed() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddProductPage()),
+  /// 물품 추가 버튼
+  FloatingActionButton get floatingActionButton => FloatingActionButton(
+    onPressed: () => Navigator.push(context,
+      MaterialPageRoute(
+        builder: (context) => const AddProductPage()
+      ),
+    ),
+    tooltip: '제품 추가',
+    child: const Icon(Icons.add),
+  );
+
+  /// 페이지 이동 버튼
+  BottomNavigationBar get bottomNavigationBar {
+    final noteNavigator = BottomNavigationBarItem(
+      icon: Badge(
+        label: Text('$numNote'),
+        child: const Icon(Icons.note_outlined),
+      ),
+      activeIcon: Badge(
+        label: Text('$numNote'),
+        child: const Icon(Icons.note),
+      ),
+      tooltip: '노트',
+      label: '노트',
+    );
+    const searchNavigator = BottomNavigationBarItem(
+      icon: Icon(Icons.search_outlined),
+      activeIcon: Icon(Icons.search),
+      tooltip: '검색',
+      label: '검색',
+    );
+    const homeNavigator = BottomNavigationBarItem(
+      icon: Icon(Icons.home_outlined),
+      activeIcon: Icon(Icons.home),
+      tooltip: '홈',
+      label: '홈',
+    );
+    const starNavigator = BottomNavigationBarItem(
+      icon: Icon(Icons.star_outline_rounded),
+      activeIcon: Icon(Icons.star_rounded),
+      tooltip: '재고 처리',
+      label: '재고 처리',
+    );
+    const settingsNavigator = BottomNavigationBarItem(
+      icon: Icon(Icons.settings_outlined),
+      activeIcon: Icon(Icons.settings),
+      tooltip: '설정',
+      label: '설정',
+    );
+
+    return BottomNavigationBar(
+      onTap: (tappedIndex) => tappedIndex != 1 ?
+        setState(() => currentPageIndex = tappedIndex) :
+        showSearch(context: context, delegate: DataSearch()),
+      currentIndex: currentPageIndex,
+      type: BottomNavigationBarType.fixed,
+      items: [
+        noteNavigator, searchNavigator, homeNavigator,
+        starNavigator, settingsNavigator,
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    const pages = [
-      {'name':  '   note', 'widget': TextPlaceholder(text: 'note')},
-      {'name':   'search', 'widget': null},
-      {'name':     'home', 'widget': HomePage()},
-      {'name': 'shortcut', 'widget': InventoryPage(title: '재고 처리')},
-      {'name': 'settings', 'widget': TextPlaceholder(text: 'settings')},
-    ];
-    final page = pages[currentPageIndex];
-
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.account_circle),
-          tooltip: 'Profile',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfilePage()),
-            );
-          },
-        ),
-        title: Text('This is ${page['name'] as String} Page'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            tooltip: 'search',
-            onPressed: () {
-              // TODO
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  duration: Duration(milliseconds: 320),
-                  content: Text('Search Button'),
-                )
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            tooltip: 'Notifications',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('There are no notifications.'),
-                  duration: Duration(milliseconds: 320),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: page['widget'] as Widget,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _onFabPressed,
-        tooltip: '제품 추가',
-        child: const Icon(Icons.add),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: (tappedIndex) {
-          if (tappedIndex != 1) {
-            setState(() {
-              currentPageIndex = tappedIndex;
-            });
-          }
-          else {
-            showSearch(
-              context: context,
-              delegate: DataSearch()
-            );
-          }
-        },
-        currentIndex: currentPageIndex,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          // Badge 위젯으로 숫자를 표시하는 항목 (예: 알림 수나 품목 수)
-          BottomNavigationBarItem(
-            icon: Badge(
-              label: Text('$numNote'),
-              child: const Icon(Icons.note_outlined),
-            ),
-            activeIcon: Badge(
-              label: Text('$numNote'),
-              child: const Icon(Icons.note),
-            ),
-            tooltip: '주요 품목',
-            label: '주요 품목',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.search_outlined),
-            activeIcon: Icon(Icons.search),
-            tooltip: '검색',
-            label: '검색',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            tooltip: '메인화면',
-            label: '메인화면',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.star_outline_rounded),
-            activeIcon: Icon(Icons.star_rounded),
-            tooltip: '재고 처리',
-            label: '재고 처리',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            tooltip: '설정',
-            label: '설정',
-          ),
-        ],
-      ),
+      appBar: appBar,
+      body: page,
+      floatingActionButton: floatingActionButton,
+      bottomNavigationBar: bottomNavigationBar,
     );
   }
 }
