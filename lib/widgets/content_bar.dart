@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:my_ice_box/widgets/custom_row.dart';
+import 'package:my_ice_box/widgets/custom_layout.dart';
 
 class ContentBar extends StatelessWidget {
   final double height;
@@ -28,11 +28,13 @@ class ContentBar extends StatelessWidget {
 
     final row = PairEdgeRow(
       leading: leading,
-      content: Align(
-        alignment: Alignment.centerLeft,
-        child: content,
+      content: content,
+      trailing: trailing,
+      contentAlign: Alignment.centerLeft,
+      padding: EdgeInsets.symmetric(
+        horizontal: radius,
+        vertical: padding,
       ),
-      trailing: trailing
     );
 
     return SizedBox(
@@ -48,14 +50,7 @@ class ContentBar extends StatelessWidget {
         child: InkWell(
           onTap: () {},
           borderRadius: borderRadius,
-          child: Container(
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.symmetric(
-              horizontal: radius,
-              vertical: padding,
-            ),
             child: row,
-          ),
         ),
       ),
     );
