@@ -112,10 +112,15 @@ class DynamicFlex extends StatelessWidget {
           direction: direction,
           spacing: spacing,
           children: children.map((item) {
-            return SizedBox(
-              height: totalBoxLength / numVisibleItems,
-              child: item,
-            );
+            return direction == Axis.horizontal ?
+              SizedBox(
+                width: totalBoxLength / numVisibleItems,
+                child: item,
+              ) :
+              SizedBox(
+                height: totalBoxLength / numVisibleItems,
+                child: item,
+              );
           }).toList(),
         );
 
@@ -124,6 +129,7 @@ class DynamicFlex extends StatelessWidget {
         }
         else {
           return SingleChildScrollView(
+            scrollDirection: direction,
             child: flexList,
           );
         }

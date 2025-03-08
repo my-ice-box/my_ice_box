@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
+import 'package:my_ice_box/pages/note.dart';
 import 'package:my_ice_box/pages/profile.dart';
 import 'package:my_ice_box/pages/AddProductPage.dart';
 import 'package:my_ice_box/widgets/text_placeholder.dart';
@@ -111,14 +112,14 @@ class _MainPageState extends State<MainPage> {
 
   /// 메인 페이지에서 이동 가능한 페이지들
   final pages = [
-    TextPlaceholder(text: 'note'),
+    NotePage(),
     TextPlaceholder(text: 'search'),
     HomePage(),
     InventoryPage(title: '재고 처리'),
     TextPlaceholder(text: 'settings'),
   ];
   /// 현재 보여줄 페이지 index
-  int currentPageIndex = 2;
+  int currentPageIndex = 0;
   /// 현재 보여줄 페이지
   Widget get page => pages[currentPageIndex];
 
