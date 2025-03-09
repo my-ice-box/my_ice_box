@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
+import 'package:my_ice_box/pages/item_box.dart';
 import 'package:my_ice_box/pages/note.dart';
 import 'package:my_ice_box/pages/profile.dart';
 import 'package:my_ice_box/pages/AddProductPage.dart';
