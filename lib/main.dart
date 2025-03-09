@@ -102,7 +102,7 @@ class _MainPageState extends State<MainPage> {
         ),
         const Placeholder(),
         const HomePage(),
-        ItemBox(),
+        CardGridPage(),
         const Placeholder(),
       ][currentPageIndex],
       floatingActionButton: FloatingActionButton(
