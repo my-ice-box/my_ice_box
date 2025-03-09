@@ -44,6 +44,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+devtools_options.yaml
 
 # Symbolication related
 app.*.symbols
@@ -55,6 +56,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Flutter (>3.29)
+/android/app/.cxx
 
 # API Keys
 api-keys.*.json
