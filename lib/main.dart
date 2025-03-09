@@ -53,12 +53,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
+/// 앱 전체에서 공유할 Supabase 클라이언트를 관리
 class MyAppState with ChangeNotifier {
   /// Supabase 클라이언트 (앱 전체에서 공유)
   final supabase = Supabase.instance.client;
 }
 
-/// 여러 페이지를 전환하는 메인 페이지
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -70,7 +70,7 @@ class _MainPageState extends State<MainPage> {
   /// Note Badge에 표시할 숫자
   int get numNote {
     // TODO: supabase에서 note 불러오기
-    return 5;
+    return 2;
   }
 
   /// 앱 상단 도구들

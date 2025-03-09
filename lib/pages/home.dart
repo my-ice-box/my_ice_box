@@ -60,6 +60,7 @@ class _CategoryButtons extends StatelessWidget {
   final String tableForGroupBy;
 
   const _CategoryButtons({
+    super.key,
     required this.tableForGroupBy,
   });
 
@@ -130,6 +131,7 @@ class _CategoryToggle extends StatefulWidget {
   final void Function(int) onPressed;
 
   const _CategoryToggle({
+    super.key,
     required this.categoryItems,
     required this.onPressed,
   });
