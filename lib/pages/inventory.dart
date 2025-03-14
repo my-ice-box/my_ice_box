@@ -29,16 +29,11 @@ class InventoryPage extends StatelessWidget {
             .lte('expiration_date', threshold)
             .then((value) => value as List<dynamic>),
         builder: (context, snapshot) {
-          final groupedData = groupBy(snapshot, (item) {
-            final expDate = DateTime.parse(item['expiration_date']);
-            return expDate.isBefore(DateTime.now()) ? '만료됨' : '임박';
-          });
-
           return Scaffold(
             appBar: AppBar(title: Text(title)),
             body: Column(
               children: [
-                // 상단 재료 목록 영역
+                // 재료 목록 영역: _ExpirationSection 사용 (하나의 컨테이너로 통합)
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () async {
@@ -48,45 +43,12 @@ class InventoryPage extends StatelessWidget {
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: groupedData.entries.map((entry) {
-                            return _buildSection(
-                              context: context,
-                              headerTitle: entry.key,
-                              items: entry.value,
-                              backgroundColor: entry.key == '만료됨'
-                                  ? Colors.redAccent.withOpacity(0.1)
-                                  : Colors.orangeAccent.withOpacity(0.1),
-                            );
-                          }).toList(),
+                        child: _ExpirationSection(
+                          items: snapshot,
+                          backgroundColor: Colors.orangeAccent.withOpacity(0.1),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                // 하단 버튼 영역 (재고폐기 / 재고활용)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 재고폐기 처리 로직 추가
-                          },
-                          child: const Text('재고폐기'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 재고활용 처리 로직 추가
-                          },
-                          child: const Text('재고활용'),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ],
@@ -95,7 +57,7 @@ class InventoryPage extends StatelessWidget {
         },
       );
     } else {
-      // 냉동실, 냉장실, 미분류, 채소 등 다른 카테고리 처리
+      // 기타 카테고리 처리 (냉동실, 냉장실, 미분류, 채소 등)
       final column = {
         '냉동실': 'place_name',
         '냉장실': 'place_name',
@@ -140,8 +102,7 @@ class InventoryPage extends StatelessWidget {
                         child: Column(
                           children: groupedItems.entries.map((entry) {
                             final groupName = entry.key as String? ?? '(기타)';
-                            return _buildSection(
-                              context: context,
+                            return _SelectableSection(
                               headerTitle: groupName,
                               items: entry.value,
                             );
@@ -149,31 +110,6 @@ class InventoryPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ),
-                ),
-                // 하단 버튼 영역 (재고폐기 / 재고활용)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 재고폐기 처리 로직 추가
-                          },
-                          child: const Text('재고폐기'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 재고활용 처리 로직 추가
-                          },
-                          child: const Text('재고활용'),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ],
@@ -198,6 +134,259 @@ class InventoryPage extends StatelessWidget {
   }
 }
 
+//////////////////////////////////////////
+/// _ExpirationSection : 재고 처리 탭용  ///
+//////////////////////////////////////////
+class _ExpirationSection extends StatefulWidget {
+  final List<dynamic> items;
+  final Color? backgroundColor;
+
+  const _ExpirationSection({
+    Key? key,
+    required this.items,
+    this.backgroundColor,
+  }) : super(key: key);
+
+  @override
+  _ExpirationSectionState createState() => _ExpirationSectionState();
+}
+
+class _ExpirationSectionState extends State<_ExpirationSection> {
+  // 유효 품목과 만료 품목 각각의 선택 상태를 관리합니다.
+  Set<int> selectedValidIndices = {};
+  Set<int> selectedExpiredIndices = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth = MediaQuery.of(context).size.width;
+    const itemsPerRow = 4;
+    final itemWidth = maxWidth / itemsPerRow;
+
+    // 유통기한(만료일) 오름차순 정렬
+    List<dynamic> sortedItems = List.from(widget.items);
+    sortedItems.sort((a, b) {
+      DateTime aDate = DateTime.parse(a['expiration_date']);
+      DateTime bDate = DateTime.parse(b['expiration_date']);
+      return aDate.compareTo(bDate);
+    });
+
+    final now = DateTime.now();
+    // 유효한 품목: 아직 만료되지 않은 항목 (현재 시각과 같거나 이후)
+    final validItems = sortedItems.where((item) {
+      final expDate = DateTime.parse(item['expiration_date']);
+      return !expDate.isBefore(now);
+    }).toList();
+    // 만료된 품목: 현재 시각보다 이전인 항목
+    final expiredItems = sortedItems.where((item) {
+      final expDate = DateTime.parse(item['expiration_date']);
+      return expDate.isBefore(now);
+    }).toList();
+
+    return Card(
+      color: widget.backgroundColor ?? Theme.of(context).cardColor,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 상단 헤더: "유효기한 유의품목"
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(10)),
+            ),
+            child: Text(
+              '유효기한 유의품목',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ),
+          // 유효 품목 Grid
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: validItems.isNotEmpty
+                ? GridView.count(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              crossAxisCount: itemsPerRow,
+              childAspectRatio: 0.9,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              children: List.generate(validItems.length, (index) {
+                final item = validItems[index];
+                final isSelected = selectedValidIndices.contains(index);
+                // 디데이 계산 (유효기한)
+                final expirationDate = DateTime.parse(item['expiration_date']);
+                final diffDays = expirationDate.difference(now).inDays;
+                final dDayText = diffDays > 0 ? 'D-$diffDays' : 'D-Day';
+                return GestureDetector(
+                  onLongPress: () {
+                    setState(() {
+                      if (isSelected) {
+                        selectedValidIndices.remove(index);
+                      } else {
+                        selectedValidIndices.add(index);
+                      }
+                    });
+                  },
+                  child: Stack(
+                    children: [
+                      Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 2,
+                        child: Container(
+                          alignment: Alignment.center,
+                          width: itemWidth,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 8),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                item['ingredient_name'] ?? '이름 미지정',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 4),
+                              if (item['expiration_date'] != null)
+                                Text(
+                                  dDayText,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall,
+                                  textAlign: TextAlign.center,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (isSelected)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Icon(
+                            Icons.check_circle,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+            )
+                : Container(
+              padding: const EdgeInsets.all(8),
+              child: Center(child: Text("유효한 품목이 없습니다.")),
+            ),
+          ),
+          // 만료된 품목이 있을 경우 구분선과 "유효기한 만료" 레이블, 만료 품목 Grid 표시
+          if (expiredItems.isNotEmpty) ...[
+            Divider(thickness: 1, color: Colors.grey),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              alignment: Alignment.center,
+              child: Text(
+                '유효기한 만료',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GridView.count(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                crossAxisCount: itemsPerRow,
+                childAspectRatio: 0.9,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                children: List.generate(expiredItems.length, (index) {
+                  final item = expiredItems[index];
+                  final isSelected = selectedExpiredIndices.contains(index);
+                  return GestureDetector(
+                    onLongPress: () {
+                      setState(() {
+                        if (isSelected) {
+                          selectedExpiredIndices.remove(index);
+                        } else {
+                          selectedExpiredIndices.add(index);
+                        }
+                      });
+                    },
+                    child: Stack(
+                      children: [
+                        Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 2,
+                          child: Container(
+                            alignment: Alignment.center,
+                            width: itemWidth,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 8),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  item['ingredient_name'] ?? '이름 미지정',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 4),
+                                // 기한이 지난 항목은 "기한만료"를 빨간색으로 표시
+                                Text(
+                                  '기한만료',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(color: Colors.red),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Icon(
+                              Icons.check_circle,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+//////////////////////////////////////////////
+/// _SelectableSection : 기타 카테고리용  ///
+//////////////////////////////////////////////
 class _SelectableSection extends StatefulWidget {
   final String headerTitle;
   final List<dynamic> items;
@@ -215,7 +404,6 @@ class _SelectableSection extends StatefulWidget {
 }
 
 class _SelectableSectionState extends State<_SelectableSection> {
-  // 각 아이템의 인덱스를 통해 선택 상태를 관리합니다.
   Set<int> selectedIndices = {};
 
   void _toggleSelection(int index) {
@@ -247,6 +435,9 @@ class _SelectableSectionState extends State<_SelectableSection> {
     const itemsPerRow = 4;
     final itemWidth = maxWidth / itemsPerRow;
 
+    bool allSelected =
+        widget.items.isNotEmpty && selectedIndices.length == widget.items.length;
+
     return Card(
       color: widget.backgroundColor ?? Theme.of(context).cardColor,
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -254,7 +445,7 @@ class _SelectableSectionState extends State<_SelectableSection> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Column(
         children: [
-          // 섹션 헤더: 제목 및 전체 선택/취소 버튼
+          // 헤더: 제목 및 전체 선택/취소 버튼
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -288,7 +479,7 @@ class _SelectableSectionState extends State<_SelectableSection> {
               ],
             ),
           ),
-          // GridView로 품목 나열 (각 카드는 길게 눌러 선택 가능)
+          // GridView로 품목 나열 (개별 선택 가능)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: GridView.count(
@@ -334,16 +525,13 @@ class _SelectableSectionState extends State<_SelectableSection> {
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
-                                      ?.copyWith(
-                                    color: Colors.grey.shade600,
-                                  ),
+                                      ?.copyWith(color: Colors.grey.shade600),
                                   textAlign: TextAlign.center,
                                 ),
                             ],
                           ),
                         ),
                       ),
-                      // 선택된 아이템인 경우 우상단에 체크 아이콘 표시
                       if (isSelected)
                         Positioned(
                           top: 4,
