@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_ice_box/pages/note_detail.dart';
 import 'package:my_ice_box/widgets/custom_layout.dart';
 
 class NotePage extends StatelessWidget{
@@ -22,8 +23,16 @@ class NotePage extends StatelessWidget{
     final notebox = Container(
       decoration: blueBorder,
       padding: EdgeInsets.all(5),
-      child: ColoredBox(
-        color: Colors.amber,
+      child: ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.all(Colors.amber),
+        ),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NoteDetailPage(),
+          ),
+        ),
         child: Center(child: Text('Hello')),
       ),
     );

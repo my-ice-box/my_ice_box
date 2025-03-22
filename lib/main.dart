@@ -8,7 +8,7 @@ import 'package:my_ice_box/widgets/text_placeholder.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_ice_box/pages/inventory.dart';
-import 'package:my_ice_box/pages/search_v2.dart';
+import 'package:my_ice_box/pages/search.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
