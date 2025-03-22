@@ -9,14 +9,28 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_ice_box/pages/inventory.dart';
 import 'package:my_ice_box/pages/search.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 Future<void> main() async {
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
     url: const String.fromEnvironment("SUPABASE_URL"),
     anonKey: const String.fromEnvironment("SUPABASE_ANON_KEY"),
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+    ),
   );
+
+  () async {
+    final response = await Supabase.instance.client.auth.signInWithPassword(
+      email: const String.fromEnvironment("SUPABASE_DUMMY_EMAIL"),
+      password: const String.fromEnvironment("SUPABASE_DUMMY_PASSWORD"),
+    );
+
+    print(response.user?.email);
+  }();
 
   runApp(const MyApp());
 }
