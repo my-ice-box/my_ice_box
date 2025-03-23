@@ -1,201 +1,96 @@
 import 'package:flutter/material.dart';
-import 'package:my_ice_box/main.dart';
-import 'package:my_ice_box/widgets/custom_future_builder.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:collection/collection.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class InventoryPage extends StatelessWidget {
   final String title;
+  final PostgrestList items;
+  final String columnToGroupBy;
 
   const InventoryPage({
     super.key,
     required this.title,
+    required this.items,
+    required this.columnToGroupBy,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (title == '재고 처리') {
-      // nearExpiryThreshold: 현재부터 3일 이내의 유통기한
-      final threshold =
-      DateTime.now().add(const Duration(days: 3)).toIso8601String();
+    final groupedItems = groupBy(items,
+      (item) => item[columnToGroupBy],
+    );
 
-      return CustomFutureBuilder<List<dynamic>>(
-        future: context
-            .watch<MyAppState>()
-            .supabase
-            .from('items')
-            .select('*, ...ingredient!inner(*)')
-            .lte('expiration_date', threshold)
-            .then((value) => value as List<dynamic>),
-        builder: (context, snapshot) {
-          final groupedData = groupBy(snapshot, (item) {
-            final expDate = DateTime.parse(item['expiration_date']);
-            return expDate.isBefore(DateTime.now()) ? '만료됨' : '임박';
-          });
+    // 상단 재료 목록 영역
+    final ingredientLists = Expanded(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: groupedItems.entries.map((entry) {
+              return _buildSection(
+                context: context,
+                headerTitle: entry.key as String,
+                items: entry.value,
+                backgroundColor: entry.key == '만료됨' ?
+                  Colors.redAccent.withValues(alpha: 0.1) :
+                  Colors.orangeAccent.withValues(alpha: 0.1),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
 
-          return Scaffold(
-            appBar: AppBar(title: Text(title)),
-            body: Column(
-              children: [
-                // 상단 재료 목록 영역
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      // 새로고침 로직 추가
-                    },
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: groupedData.entries.map((entry) {
-                            return _buildSection(
-                              context: context,
-                              headerTitle: entry.key,
-                              items: entry.value,
-                              backgroundColor: entry.key == '만료됨'
-                                  ? Colors.redAccent.withOpacity(0.1)
-                                  : Colors.orangeAccent.withOpacity(0.1),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // 하단 버튼 영역 (재고폐기 / 재고활용)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 재고폐기 처리 로직 추가
-                          },
-                          child: const Text('재고폐기'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 재고활용 처리 로직 추가
-                          },
-                          child: const Text('재고활용'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    // 하단 버튼 영역 (재고폐기 / 재고활용)
+    final bottomButtons = Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () {
+                // 재고폐기 처리 로직 추가
+              },
+              child: const Text('재고폐기'),
             ),
-          );
-        },
-      );
-    } else {
-      // 냉동실, 냉장실, 미분류, 채소 등 다른 카테고리 처리
-      final column = {
-        '냉동실': 'place_name',
-        '냉장실': 'place_name',
-        '(미분류)': 'place_name',
-        '채소': 'ingredient.category_name',
-        '육류': 'ingredient.category_name',
-        '과일': 'ingredient.category_name',
-        '유제품': 'ingredient.category_name',
-      }[title]!;
-
-      return CustomFutureBuilder<List<dynamic>>(
-        future: context
-            .watch<MyAppState>()
-            .supabase
-            .from('items')
-            .select('*, ...ingredient!inner(*)')
-            .eq(column, title)
-            .then((value) => value as List<dynamic>),
-        builder: (context, snapshot) {
-          final groupedItems = groupBy(
-            snapshot,
-                (item) => item[{
-              'place_name': 'category_name',
-              'ingredient.category_name': 'place_name',
-            }[column]!],
-          );
-
-          return Scaffold(
-            appBar: AppBar(title: Text(title)),
-            body: Column(
-              children: [
-                // 상단 재료 목록 영역
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      // 새로고침 로직 추가
-                    },
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: groupedItems.entries.map((entry) {
-                            final groupName = entry.key as String? ?? '(기타)';
-                            return _buildSection(
-                              context: context,
-                              headerTitle: groupName,
-                              items: entry.value,
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // 하단 버튼 영역 (재고폐기 / 재고활용)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 재고폐기 처리 로직 추가
-                          },
-                          child: const Text('재고폐기'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 재고활용 처리 로직 추가
-                          },
-                          child: const Text('재고활용'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () {
+                // 재고활용 처리 로직 추가
+              },
+              child: const Text('재고활용'),
             ),
-          );
-        },
-      );
-    }
-  }
+          ),
+        ],
+      ),
+    );
 
-  Widget _buildSection({
-    required BuildContext context,
-    required String headerTitle,
-    required List<dynamic> items,
-    Color? backgroundColor,
-  }) {
-    return _SelectableSection(
-      headerTitle: headerTitle,
-      items: items,
-      backgroundColor: backgroundColor,
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Column(
+        children: [
+          ingredientLists,
+          bottomButtons,
+        ],
+      ),
     );
   }
+}
+
+Widget _buildSection({
+  required BuildContext context,
+  required String headerTitle,
+  required List<dynamic> items,
+  Color? backgroundColor,
+}) {
+  return _SelectableSection(
+    headerTitle: headerTitle,
+    items: items,
+    backgroundColor: backgroundColor,
+  );
 }
 
 class _SelectableSection extends StatefulWidget {
@@ -204,11 +99,10 @@ class _SelectableSection extends StatefulWidget {
   final Color? backgroundColor;
 
   const _SelectableSection({
-    Key? key,
     required this.headerTitle,
     required this.items,
     this.backgroundColor,
-  }) : super(key: key);
+  });
 
   @override
   _SelectableSectionState createState() => _SelectableSectionState();
@@ -259,7 +153,7 @@ class _SelectableSectionState extends State<_SelectableSection> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               borderRadius:
               const BorderRadius.vertical(top: Radius.circular(10)),
             ),

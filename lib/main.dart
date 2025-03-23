@@ -1,24 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:my_ice_box/pages/home.dart';
-import 'package:my_ice_box/pages/item_box.dart';
 import 'package:my_ice_box/pages/note.dart';
 import 'package:my_ice_box/pages/profile.dart';
 import 'package:my_ice_box/pages/AddProductPage.dart';
 import 'package:my_ice_box/widgets/text_placeholder.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:my_ice_box/pages/inventory.dart';
-import 'package:my_ice_box/pages/search_v2.dart';
+import 'package:my_ice_box/pages/search.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 Future<void> main() async {
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
     url: const String.fromEnvironment("SUPABASE_URL"),
     anonKey: const String.fromEnvironment("SUPABASE_ANON_KEY"),
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+    ),
   );
 
-  runApp(const MyApp());
+  () async {
+    await Supabase.instance.client.auth.signInWithPassword(
+      email: const String.fromEnvironment("SUPABASE_DUMMY_EMAIL"),
+      password: const String.fromEnvironment("SUPABASE_DUMMY_PASSWORD"),
+    );
+  }();
+
+  runApp(ChangeNotifierProvider(
+    create: (context) => MyAppState(),
+    child: const MyApp(),
+  ));
+}
+
+class MyAppState with ChangeNotifier {
+  final supabase = Supabase.instance.client;
+  PostgrestList items = [];
+  PostgrestList notes = [];
+
+  static const classTable = ['place', 'category'];
+  PostgrestList places = [];
+  PostgrestList categories = [];
+
+  Future<void> fetchItems() async {
+    items = await supabase.from('items')
+      .select('ingredient_name, amount, place_name, added_at, expiration_date,' 
+        '...ingredient!inner(ingredient_name, category_name)'
+      );
+
+    // notifyListeners();
+  }
+
+  Future<void> fetchNotes() async {
+    notes = await supabase.from('notes')
+      .select('title, content, updated_at');
+
+    // notifyListeners();
+  }
+
+  Future<void> fetchAll() async {
+    places = await supabase.from('place')
+      .select('*');
+    categories = await supabase.from('category')
+      .select('*');
+
+    await fetchItems();
+    await fetchNotes();
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -26,6 +75,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appState = context.watch<MyAppState>();
+    appState.fetchAll();
+
     final appTheme = ThemeData(
       useMaterial3: true,
       colorScheme: const ColorScheme(
@@ -43,21 +95,12 @@ class MyApp extends StatelessWidget {
       textTheme: Typography.blackCupertino,
     );
 
-    return ChangeNotifierProvider(
-      create: (context) => MyAppState(),
-      child: MaterialApp(
-        title: 'My Ice Box',
-        theme: appTheme,
-        home: const MainPage(),
-      ),
+    return MaterialApp(
+      title: 'My Ice Box',
+      theme: appTheme,
+      home: const MainPage(),
     );
   }
-}
-
-/// 앱 전체에서 공유할 Supabase 클라이언트를 관리
-class MyAppState with ChangeNotifier {
-  /// Supabase 클라이언트 (앱 전체에서 공유)
-  final supabase = Supabase.instance.client;
 }
 
 class MainPage extends StatefulWidget {
@@ -68,12 +111,6 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  /// Note Badge에 표시할 숫자
-  int get numNote {
-    // TODO: supabase에서 note 불러오기
-    return 2;
-  }
-
   /// 앱 상단 도구들
   AppBar get appBar {
     final profile = IconButton(
@@ -116,7 +153,7 @@ class _MainPageState extends State<MainPage> {
     NotePage(),
     TextPlaceholder(text: 'search'),
     HomePage(),
-    InventoryPage(title: '재고 처리'),
+    TextPlaceholder(text: 'star'),
     TextPlaceholder(text: 'settings'),
   ];
   /// 현재 보여줄 페이지 index
@@ -136,7 +173,9 @@ class _MainPageState extends State<MainPage> {
   );
 
   /// 페이지 이동 버튼
-  BottomNavigationBar get bottomNavigationBar {
+  BottomNavigationBar bottomNavigationBar(BuildContext context) {
+    final numNote = context.watch<MyAppState>().notes.length;
+
     final noteNavigator = BottomNavigationBarItem(
       icon: Badge(
         label: Text('$numNote'),
@@ -193,7 +232,7 @@ class _MainPageState extends State<MainPage> {
       appBar: appBar,
       body: page,
       floatingActionButton: floatingActionButton,
-      bottomNavigationBar: bottomNavigationBar,
+      bottomNavigationBar: bottomNavigationBar(context),
     );
   }
 }
